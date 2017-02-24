@@ -55,6 +55,12 @@ namespace QuantConnect.Packets
         public bool Toast;
 
         /// <summary>
+        /// Indicates whether the message will be rate limited or not
+        /// </summary>
+        [JsonIgnore]
+        public bool ForceSend;
+
+        /// <summary>
         /// Default constructor for JSON
         /// </summary>
         public DebugPacket()
@@ -64,7 +70,7 @@ namespace QuantConnect.Packets
         /// <summary>
         /// Create a new instance of the notify debug packet:
         /// </summary>
-        public DebugPacket(int projectId, string algorithmId, string compileId, string message, bool toast = false)
+        public DebugPacket(int projectId, string algorithmId, string compileId, string message, bool toast = false, bool forceSend = false)
             : base(PacketType.Debug)
         {
             ProjectId = projectId;
@@ -72,6 +78,7 @@ namespace QuantConnect.Packets
             CompileId = compileId;
             AlgorithmId = algorithmId;
             Toast = toast;
+            ForceSend = forceSend;
         }
     
     } // End Work Packet:
