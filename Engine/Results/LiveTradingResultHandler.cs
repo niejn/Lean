@@ -233,7 +233,7 @@ namespace QuantConnect.Lean.Engine.Results
         /// <summary>
         /// Every so often send an update to the browser with the current state of the algorithm.
         /// </summary>
-        public void Update()
+        public void Update(bool force = false)
         {
             //Initialize:
             Dictionary<int, Order> deltaOrders;
@@ -247,7 +247,7 @@ namespace QuantConnect.Lean.Engine.Results
 
             try
             {
-                if (DateTime.Now > _nextUpdate || _exitTriggered)
+                if (DateTime.Now > _nextUpdate || force)
                 {
                     //Extract the orders created since last update
                     OrderEvent orderEvent;
@@ -338,7 +338,7 @@ namespace QuantConnect.Lean.Engine.Results
                     }
 
                     //Send full packet to storage.
-                    if (DateTime.Now > _nextChartsUpdate || _exitTriggered)
+                    if (DateTime.Now > _nextChartsUpdate || force)
                     {
                         Log.Debug("LiveTradingResultHandler.Update(): Pre-store result");
                         _nextChartsUpdate = DateTime.Now.AddMinutes(1);
@@ -359,7 +359,7 @@ namespace QuantConnect.Lean.Engine.Results
                     }
 
                     // Upload the logs every 1-2 minutes; this can be a heavy operation depending on amount of live logging and should probably be done asynchronously.
-                    if (DateTime.Now > _nextLogStoreUpdate || _exitTriggered)
+                    if (DateTime.Now > _nextLogStoreUpdate || force)
                     {
                         List<LogEntry> logs;
                         Log.Debug("LiveTradingResultHandler.Update(): Storing log...");
@@ -378,7 +378,7 @@ namespace QuantConnect.Lean.Engine.Results
                     }
 
                     // Every minute send usage statistics:
-                    if (DateTime.Now > _nextStatisticsUpdate || _exitTriggered)
+                    if (DateTime.Now > _nextStatisticsUpdate || force)
                     {
                         try
                         {
@@ -950,17 +950,22 @@ namespace QuantConnect.Lean.Engine.Results
         /// </summary>
         public void Exit()
         {
-            // If the algorithm was not successfully initialized, be sure to store the logs
-            // Update() will be unable to store the logs if the algorithm never full initialized
-            if (!_exitTriggered && _algorithm != null && !_algorithm.GetLocked())
+            if (!_exitTriggered)
             {
-                ProcessSynchronousEvents(true);
-                StoreLog(_logStore);
+                if (_algorithm != null && !_algorithm.GetLocked())
+                {
+                    // If the algorithm was not successfully initialized, be sure to store the logs
+                    // Update() will be unable to store the logs if the algorithm never full initialized
+                    ProcessSynchronousEvents(true);
+                    StoreLog(_logStore);
+                }
+                else
+                {
+                    Update(true);
+                }
             }
 
             _exitTriggered = true;
-
-            Update();
         }
 
         /// <summary>
