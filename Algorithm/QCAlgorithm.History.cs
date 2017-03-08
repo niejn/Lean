@@ -510,7 +510,21 @@ namespace QuantConnect.Algorithm
             }
 
             // filter out future data to prevent look ahead bias
-            return ((IAlgorithm) this).HistoryProvider.GetHistory(reqs, timeZone);
+            var history = HistoryProvider.GetHistory(reqs, timeZone);
+
+            if (LiveMode && reqs.Count > 1)
+            {
+                // data returned by IHistoryProvider brokerage implementations 
+                // for multiple requests is not synchronized / ordered by time,
+                // so we regenerate slices grouping by time.
+
+                history = history
+                    .GroupBy(x => x.Time)
+                    .OrderBy(grouping => grouping.Key)
+                    .Select(grouping => new Slice(grouping.Key, grouping.SelectMany(x => x.Values)));
+            }
+
+            return history;
         }
 
         /// <summary>
