@@ -1047,7 +1047,8 @@ namespace QuantConnect.Lean.Engine.Results
                             continue;
 
                         Security security;
-                        if (_algorithm.Securities.TryGetValue(subscription.Configuration.Symbol, out security))
+                        if (_algorithm.Securities.TryGetValue(subscription.Configuration.Symbol, out security)
+                            && security.Exchange.Hours.IsOpen(time, security.IsExtendedMarketHours))
                         {
                             //Sample Portfolio Value:
                             var price = subscription.RealtimePrice;
